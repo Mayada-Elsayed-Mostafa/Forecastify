@@ -1,5 +1,12 @@
 package com.example.forecastify.data.models
 
+import android.os.Parcelable
+import androidx.room.Entity
+import kotlinx.parcelize.Parcelize
+
+
+@Entity(tableName = "weatherresponsetable")
+@Parcelize
 data class WeatherResponse(
     val coord: Coord,
     val weather: List<Weather>,
@@ -15,4 +22,4 @@ data class WeatherResponse(
     val id: Int,
     val name: String,
     val cod: Int,
-)
+) : Parcelable

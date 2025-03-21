@@ -1,4 +1,4 @@
-package com.example.forecastify.models
+package com.example.forecastify.data.models
 
 data class WeatherResponse(
     val coord: Coord,
@@ -14,5 +14,5 @@ data class WeatherResponse(
     val timezone: Int,
     val id: Int,
     val name: String,
-    val cod: Int
+    val cod: Int,
 )

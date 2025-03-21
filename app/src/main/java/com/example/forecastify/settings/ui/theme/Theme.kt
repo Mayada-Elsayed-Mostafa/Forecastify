@@ -1,4 +1,4 @@
-package com.example.forecastify.ui.theme
+package com.example.forecastify.settings.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme

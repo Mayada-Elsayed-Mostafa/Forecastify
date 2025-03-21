@@ -1,4 +1,4 @@
-package com.example.forecastify.remote
+package com.example.forecastify.data.remote
 
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory

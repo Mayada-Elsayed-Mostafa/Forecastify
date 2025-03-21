@@ -1,6 +1,6 @@
-package com.example.forecastify.remote
+package com.example.forecastify.data.remote
 
-import com.example.forecastify.models.WeatherResponse
+import com.example.forecastify.data.models.WeatherResponse
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Query

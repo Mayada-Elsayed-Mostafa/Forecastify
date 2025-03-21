@@ -1,4 +1,4 @@
-package com.example.forecastify.models
+package com.example.forecastify.data.models
 
 data class Coord(
     val lon: Double,

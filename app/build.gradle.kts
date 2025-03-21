@@ -103,4 +103,9 @@ dependencies {
     // Custom Fonts for Compose UI
     implementation("androidx.compose.ui:ui-text-google-fonts:1.4.0")
 
+    // Compose Material 3 Adaptive
+    implementation("androidx.compose.material3.adaptive:adaptive:1.2.0-alpha01")
+    implementation("androidx.compose.material3.adaptive:adaptive-layout:1.2.0-alpha01")
+    implementation("androidx.compose.material3.adaptive:adaptive-navigation:1.2.0-alpha01")
+
 }

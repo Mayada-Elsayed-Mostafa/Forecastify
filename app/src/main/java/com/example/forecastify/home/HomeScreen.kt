@@ -1,8 +1,5 @@
 package com.example.forecastify.home
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -43,29 +40,6 @@ import com.example.forecastify.R
 import com.example.forecastify.data.models.WeatherResponse
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-
-class HomeActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        setContent {
-//            AppTheme {
-//                HomeScreen(
-//                    viewModel(
-//                        factory = HomeFactory(
-//                            WeatherRepositoryImp.getInstance(
-//                                RemoteDataSourceImp(Retrofit.apiService),
-//                                LocalDataSourceImp(
-//                                    WeatherDatabase.getInstance(this).getWeatherDao()
-//                                )
-//                            )
-//                        )
-//                    )
-//                )
-//            }
-        }
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -336,19 +310,39 @@ fun DailyDetails(weather: WeatherResponse?) {
 
 @Composable
 fun HourlyDetails(weather: WeatherResponse?) {
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(4.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
-        Column {
-            Text("Hourly Details", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-            Row {
+        Column(
+            modifier = Modifier.padding(8.dp)
+        ) {
+            Text(
+                text = "Hourly Forecast",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
 
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                repeat(5) { index ->
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
+                        Text(text = "${index * 3}h", fontSize = 14.sp)
+                        Image(
+                            painter = painterResource(id = R.drawable.cloudy_icon),
+                            contentDescription = "Weather Icon",
+                            modifier = Modifier.size(40.dp)
+                        )
+                        Text(text = "${weather?.main?.temp?.toInt() ?: "--"}°C", fontSize = 14.sp)
+                    }
+                }
             }
         }
     }
-
 }

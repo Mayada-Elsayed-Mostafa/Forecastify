@@ -38,15 +38,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import com.example.forecastify.R
-import com.example.forecastify.data.local.LocalDataSourceImp
-import com.example.forecastify.data.local.WeatherDatabase
 import com.example.forecastify.data.models.WeatherResponse
-import com.example.forecastify.data.remote.RemoteDataSourceImp
-import com.example.forecastify.data.remote.Retrofit
-import com.example.forecastify.data.repository.WeatherRepositoryImp
-import com.example.forecastify.settings.ui.theme.AppTheme
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -55,27 +49,27 @@ class HomeActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            AppTheme {
-                HomeScreen(
-                    viewModel(
-                        factory = HomeFactory(
-                            WeatherRepositoryImp.getInstance(
-                                RemoteDataSourceImp(Retrofit.apiService),
-                                LocalDataSourceImp(
-                                    WeatherDatabase.getInstance(this).getWeatherDao()
-                                )
-                            )
-                        )
-                    )
-                )
-            }
+//            AppTheme {
+//                HomeScreen(
+//                    viewModel(
+//                        factory = HomeFactory(
+//                            WeatherRepositoryImp.getInstance(
+//                                RemoteDataSourceImp(Retrofit.apiService),
+//                                LocalDataSourceImp(
+//                                    WeatherDatabase.getInstance(this).getWeatherDao()
+//                                )
+//                            )
+//                        )
+//                    )
+//                )
+//            }
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(viewModel: HomeViewModel) {
+fun HomeScreen(navHostController: NavHostController, viewModel: HomeViewModel) {
 
     viewModel.getWeather()
     val currentWeather = viewModel.weather.observeAsState()

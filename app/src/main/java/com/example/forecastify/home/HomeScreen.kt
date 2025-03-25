@@ -1,5 +1,6 @@
 package com.example.forecastify.home
 
+import android.location.Location
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,16 +39,17 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.forecastify.R
 import com.example.forecastify.data.models.WeatherResponse
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navHostController: NavHostController, viewModel: HomeViewModel) {
+fun HomeScreen(navHostController: NavHostController, viewModel: HomeViewModel, location: Location) {
 
-    viewModel.getWeather()
+    viewModel.getWeather(location)
     val currentWeather = viewModel.weather.observeAsState()
-    val messageState = viewModel.message.observeAsState()
 
     var state by remember { mutableIntStateOf(0) }
     val titles = listOf("Today", "Tomorrow", "5 days")
@@ -55,7 +57,6 @@ fun HomeScreen(navHostController: NavHostController, viewModel: HomeViewModel) {
     Column {
 
         CurrentWeatherComponent(currentWeather.value)
-
 
         PrimaryTabRow(selectedTabIndex = state) {
             titles.forEachIndexed { index, title ->
@@ -76,7 +77,7 @@ fun HomeScreen(navHostController: NavHostController, viewModel: HomeViewModel) {
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(vertical = 12.dp),
-                            contentAlignment = androidx.compose.ui.Alignment.Center
+                            contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = title,
@@ -145,14 +146,14 @@ fun CurrentWeatherComponent(weather: WeatherResponse?) {
                                 color = MaterialTheme.colorScheme.onPrimary
                             )
                             Text(
-                                text = "°C",
+                                text = "°K",
                                 fontSize = 24.sp,
                                 color = MaterialTheme.colorScheme.onPrimary,
                                 modifier = Modifier.padding(start = 4.dp)
                             )
                         }
                         Text(
-                            text = "Feels like ${weather?.main?.feelsLike?.toInt() ?: "--"}°C",
+                            text = "${weather?.main?.tempMax?.toInt() ?: "--"}/${weather?.main?.tempMin?.toInt() ?: "--"} Feels like ${weather?.main?.feelsLike?.toInt() ?: "--"}°K",
                             fontSize = 14.sp,
                             color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                         )
@@ -305,6 +306,68 @@ fun DailyDetails(weather: WeatherResponse?) {
                 }
             }
         }
+
+        Row(modifier = Modifier.fillMaxWidth()) {
+            val sunriseUtc = weather?.sys?.sunrise ?: 0
+            val sunsetUtc = weather?.sys?.sunset ?: 0
+            val timezoneOffset = weather?.timezone ?: 0
+
+            val sunriseLocal = Instant.ofEpochSecond(sunriseUtc + timezoneOffset)
+                .atZone(ZoneId.of("UTC"))
+                .toLocalTime()
+                .format(DateTimeFormatter.ofPattern("HH:mm"))
+
+            val sunsetLocal = Instant.ofEpochSecond(sunsetUtc + timezoneOffset)
+                .atZone(ZoneId.of("UTC"))
+                .toLocalTime()
+                .format(DateTimeFormatter.ofPattern("HH:mm"))
+
+            Card(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(4.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Row(
+                    modifier = Modifier.padding(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.sunrise),
+                        contentDescription = "Sun Rise Icon",
+                        modifier = Modifier.size(40.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text("Sunrise", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        Text(text = sunriseLocal, fontSize = 14.sp)
+                    }
+                }
+            }
+
+            Card(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(4.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Row(
+                    modifier = Modifier.padding(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.sunset),
+                        contentDescription = "Sunset Icon",
+                        modifier = Modifier.size(40.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text("Sunset", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        Text(text = sunsetLocal, fontSize = 14.sp)
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -339,7 +402,7 @@ fun HourlyDetails(weather: WeatherResponse?) {
                             contentDescription = "Weather Icon",
                             modifier = Modifier.size(40.dp)
                         )
-                        Text(text = "${weather?.main?.temp?.toInt() ?: "--"}°C", fontSize = 14.sp)
+                        Text(text = "${weather?.main?.temp?.toInt() ?: "--"}°K", fontSize = 14.sp)
                     }
                 }
             }

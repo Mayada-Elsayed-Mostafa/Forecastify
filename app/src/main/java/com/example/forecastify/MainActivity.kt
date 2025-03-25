@@ -1,6 +1,15 @@
 package com.example.forecastify
 
+import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.location.Geocoder
+import android.location.Location
+import android.location.LocationManager
 import android.os.Bundle
+import android.os.Looper
+import android.provider.Settings
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -11,10 +20,14 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -41,24 +54,157 @@ import com.example.forecastify.settings.SettingsFactory
 import com.example.forecastify.settings.SettingsScreen
 import com.example.forecastify.settings.SettingsViewModel
 import com.example.forecastify.ui.theme.AppTheme
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+
+const val REQUEST_LOCATION_CODE = 2002
 
 class MainActivity : ComponentActivity() {
+
+    private lateinit var mFusedLocationProviderClient: FusedLocationProviderClient
+    var locationState: MutableState<Location> = mutableStateOf(Location(""))
+    var addressText: MutableState<String> = mutableStateOf("")
+
+    override fun onStart() {
+        super.onStart()
+
+        if (checkPermissions()) {
+            if (isLocationEnabled()) {
+                getFreshLocation()
+            } else {
+                enableLocationServices()
+            }
+        } else {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ),
+                REQUEST_LOCATION_CODE
+            )
+        }
+
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        getFreshLocation()
         setContent {
             AppTheme {
-                AppScreen()
+                AppScreen(locationState.value)
             }
         }
     }
+
+    //1
+    private fun checkPermissions(): Boolean {
+        var result = false
+        if ((ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED)
+            ||
+            (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED)
+        ) {
+            result = true
+        }
+        return result
+    }
+
+    //2
+    private fun isLocationEnabled(): Boolean {
+        val locationManager: LocationManager =
+            getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(
+            LocationManager.NETWORK_PROVIDER
+        )
+    }
+
+    //3
+    private fun getFreshLocation() {
+
+        mFusedLocationProviderClient =
+            LocationServices.getFusedLocationProviderClient(this)
+
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this, arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ), com.example.forecastify.home.REQUEST_LOCATION_CODE
+            )
+
+        }
+        mFusedLocationProviderClient.requestLocationUpdates(
+            LocationRequest.Builder(0).apply {
+                setPriority(Priority.PRIORITY_HIGH_ACCURACY)
+            }.build(),
+            object : LocationCallback() {
+                override fun onLocationResult(p0: LocationResult) {
+                    super.onLocationResult(p0)
+                    val location = p0.lastLocation ?: return
+
+                    locationState.value = location
+                    Log.i("TAG", location.longitude.toString())
+                    val geocoder = Geocoder(this@MainActivity)
+                    val addresses = geocoder.getFromLocation(
+                        location.latitude,
+                        location.longitude,
+                        1
+                    )
+                    addressText.value =
+                        addresses?.get(0)?.getAddressLine(0) ?: "Address not found"
+                }
+            },
+            Looper.myLooper()
+        )
+
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray,
+        deviceId: Int,
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults, deviceId)
+        if (requestCode == com.example.forecastify.home.REQUEST_LOCATION_CODE) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                getFreshLocation()
+            }
+        }
+    }
+
+    //4
+    private fun enableLocationServices() {
+        val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+        startActivity(intent)
+    }
+
 }
 
 @Composable
-fun AppScreen() {
+fun AppScreen(locationState: Location) {
     val navController = rememberNavController()
     Scaffold(bottomBar = { BottomBar(navController) }, modifier = Modifier.fillMaxSize()) { it ->
         Log.i("TAG", "AppScreen: $it")
-        BottomNavGraph(navController)
+        BottomNavGraph(navController, locationState)
     }
 }
 
@@ -93,7 +239,7 @@ fun BottomBar(navHostController: NavHostController) {
 }
 
 @Composable
-fun BottomNavGraph(navHostController: NavHostController) {
+fun BottomNavGraph(navHostController: NavHostController, locationState:Location) {
     NavHost(
         navController = navHostController,
         startDestination = BottomBarRoutes.HomeScreenRoute.route
@@ -110,7 +256,7 @@ fun BottomNavGraph(navHostController: NavHostController) {
                     )
                 )
             ).get(HomeViewModel::class.java)
-            HomeScreen(navHostController, viewModel)
+            HomeScreen(navHostController, viewModel, locationState)
         }
 
         composable(BottomBarRoutes.FavoritesScreenRoute.route) { backStackEntry ->
@@ -127,7 +273,6 @@ fun BottomNavGraph(navHostController: NavHostController) {
             ).get(FavLocationsViewModel::class.java)
             FavoriteLocationsScreen(navHostController, viewModel)
         }
-
 
         composable(BottomBarRoutes.AlertsScreenRoute.route) { backStackEntry ->
             val parentEntry = navHostController.currentBackStackEntry

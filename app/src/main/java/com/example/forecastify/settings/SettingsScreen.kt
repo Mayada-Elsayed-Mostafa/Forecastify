@@ -1,9 +1,5 @@
 package com.example.forecastify.settings
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -31,26 +27,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 import com.example.forecastify.data.local.SettingsDataStore
-import com.example.forecastify.settings.ui.theme.AppTheme
-
-class SettingsActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        val settingsDataStore = SettingsDataStore(this)
-        val viewModel: SettingsViewModel by viewModels { SettingsFactory(settingsDataStore) }
-
-        setContent {
-            AppTheme {
-                SettingScreen(viewModel)
-            }
-        }
-    }
-}
 
 @Composable
-fun SettingScreen(viewModel: SettingsViewModel) {
+fun SettingsScreen(navHostController: NavHostController, viewModel: SettingsViewModel) {
     val language by viewModel.language.collectAsState()
     val temperatureUnit by viewModel.temperatureUnit.collectAsState()
     val windSpeedUnit by viewModel.windSpeedUnit.collectAsState()

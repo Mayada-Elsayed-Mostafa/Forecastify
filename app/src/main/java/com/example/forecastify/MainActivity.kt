@@ -10,7 +10,6 @@ import android.location.LocationManager
 import android.os.Bundle
 import android.os.Looper
 import android.provider.Settings
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -161,7 +160,6 @@ class MainActivity : ComponentActivity() {
                     val location = p0.lastLocation ?: return
 
                     locationState.value = location
-                    Log.i("TAG", location.longitude.toString())
                     val geocoder = Geocoder(this@MainActivity)
                     val addresses = geocoder.getFromLocation(
                         location.latitude,
@@ -203,7 +201,6 @@ class MainActivity : ComponentActivity() {
 fun AppScreen(locationState: Location) {
     val navController = rememberNavController()
     Scaffold(bottomBar = { BottomBar(navController) }, modifier = Modifier.fillMaxSize()) { it ->
-        Log.i("TAG", "AppScreen: $it")
         BottomNavGraph(navController, locationState)
     }
 }
@@ -239,7 +236,7 @@ fun BottomBar(navHostController: NavHostController) {
 }
 
 @Composable
-fun BottomNavGraph(navHostController: NavHostController, locationState:Location) {
+fun BottomNavGraph(navHostController: NavHostController, locationState: Location) {
     NavHost(
         navController = navHostController,
         startDestination = BottomBarRoutes.HomeScreenRoute.route

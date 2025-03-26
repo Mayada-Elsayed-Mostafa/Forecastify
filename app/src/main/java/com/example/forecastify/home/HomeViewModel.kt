@@ -6,6 +6,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.forecastify.data.models.ForecastResponse
 import com.example.forecastify.data.models.WeatherResponse
 import com.example.forecastify.data.repository.WeatherRepositoryImp
 import kotlinx.coroutines.Dispatchers
@@ -15,12 +16,13 @@ const val REQUEST_LOCATION_CODE = 2002
 
 class HomeViewModel(private val repository: WeatherRepositoryImp) : ViewModel() {
 
-
     private val mutableWeather: MutableLiveData<WeatherResponse> = MutableLiveData()
     val weather: LiveData<WeatherResponse> = mutableWeather
 
-    private val mutableMessage: MutableLiveData<String> = MutableLiveData()
+    private val mutableForecast: MutableLiveData<ForecastResponse> = MutableLiveData()
+    val forecast: LiveData<ForecastResponse> = mutableForecast
 
+    private val mutableMessage: MutableLiveData<String> = MutableLiveData()
 
     fun getWeather(locationState: Location) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -42,6 +44,24 @@ class HomeViewModel(private val repository: WeatherRepositoryImp) : ViewModel() 
         }
     }
 
+    fun getForecast(locationState: Location) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val result = repository.getForecast(
+                    lat = locationState.latitude,
+                    lon = locationState.longitude
+                )
+                if (result != null) {
+                    val res: ForecastResponse = result
+                    mutableForecast.postValue(res)
+                } else {
+                    mutableMessage.postValue("Please try again later...")
+                }
+            } catch (ex: Exception) {
+                mutableMessage.postValue("An error occurred ${ex.message}")
+            }
+        }
+    }
 }
 
 @Suppress("UNCHECKED_CAST")

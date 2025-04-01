@@ -1,19 +1,20 @@
 package com.example.forecastify.data.repository
 
+import com.example.forecastify.data.models.FavoriteLocation
 import com.example.forecastify.data.models.ForecastResponse
-import com.example.forecastify.data.models.MainOfForecast
 import com.example.forecastify.data.models.WeatherResponse
+import kotlinx.coroutines.flow.Flow
 
-interface WeatherRepository {
+interface Repository {
 
     suspend fun getWeather(isOnline: Boolean, lat: Double, lon: Double): WeatherResponse?
 
-    suspend fun getForecast(lat: Double, lon: Double): ForecastResponse?
-
     suspend fun getUpcomingForecast(lat: Double, lon: Double): ForecastResponse?
 
-    //suspend fun addWeather(weather: WeatherResponse): Long
+    fun getFavoriteLocations(): Flow<List<FavoriteLocation>>
 
-    //suspend fun removeWeather(weather: WeatherResponse): Int
+    suspend fun addLocation(favoriteLocation: FavoriteLocation)
+
+    suspend fun deleteLocation(id: Int)
 
 }

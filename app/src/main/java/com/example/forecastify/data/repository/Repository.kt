@@ -10,8 +10,10 @@ interface WeatherRepository {
 
     suspend fun getForecast(lat: Double, lon: Double): ForecastResponse?
 
-    suspend fun addWeather(weather: WeatherResponse): Long
+    suspend fun getUpcomingForecast(lat: Double, lon: Double): ForecastResponse?
 
-    suspend fun removeWeather(weather: WeatherResponse): Int
+    //suspend fun addWeather(weather: WeatherResponse): Long
+
+    //suspend fun removeWeather(weather: WeatherResponse): Int
 
 }

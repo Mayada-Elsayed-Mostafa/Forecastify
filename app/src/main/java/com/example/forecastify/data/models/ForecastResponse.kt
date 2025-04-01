@@ -8,7 +8,7 @@ import kotlinx.parcelize.Parcelize
 @Entity(tableName = "forecastresponsetable")
 @Parcelize
 data class ForecastResponse(
-    @PrimaryKey val id: Int,
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val cod: String,
     val message: Int,
     val cnt: Int,
@@ -77,7 +77,7 @@ data class WindOfForecast(
 
 @Parcelize
 data class RainOfForecast(
-    val `3h`: Double,
+    val rainVolume: Double,
 ) : Parcelable
 
 @Parcelize

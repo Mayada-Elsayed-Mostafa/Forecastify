@@ -5,7 +5,7 @@ import com.example.forecastify.data.models.WeatherResponse
 
 interface RemoteDataSource {
 
-    suspend fun getCurrentWeather(lat: Double, lon: Double): WeatherResponse?
+    suspend fun getCurrentWeather(lat: Double, lon: Double): WeatherResponse
 
-    suspend fun getForecastOfDay(lat: Double, lon: Double): ForecastResponse?
+    suspend fun getForecast(lat: Double, lon: Double): ForecastResponse
 }

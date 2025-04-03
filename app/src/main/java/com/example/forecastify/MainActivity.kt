@@ -37,14 +37,15 @@ import androidx.navigation.compose.rememberNavController
 import com.example.forecastify.alerts.AlertsFactory
 import com.example.forecastify.alerts.AlertsScreen
 import com.example.forecastify.alerts.AlertsViewModel
+import com.example.forecastify.data.local.AppDatabase
 import com.example.forecastify.data.local.LocalDataSourceImp
 import com.example.forecastify.data.local.SettingsDataStore
-import com.example.forecastify.data.local.WeatherDatabase
 import com.example.forecastify.data.remote.RemoteDataSourceImp
 import com.example.forecastify.data.remote.Retrofit
-import com.example.forecastify.data.repository.WeatherRepositoryImp
+import com.example.forecastify.data.repository.RepositoryImp
 import com.example.forecastify.favoriteLocations.FavLocationsFactory
 import com.example.forecastify.favoriteLocations.FavLocationsViewModel
+import com.example.forecastify.favoriteLocations.FavoriteLocationDetailsScreen
 import com.example.forecastify.favoriteLocations.FavoriteLocationsScreen
 import com.example.forecastify.home.HomeFactory
 import com.example.forecastify.home.HomeScreen
@@ -79,12 +80,10 @@ class MainActivity : ComponentActivity() {
             }
         } else {
             ActivityCompat.requestPermissions(
-                this,
-                arrayOf(
+                this, arrayOf(
                     Manifest.permission.ACCESS_FINE_LOCATION,
                     Manifest.permission.ACCESS_COARSE_LOCATION
-                ),
-                REQUEST_LOCATION_CODE
+                ), REQUEST_LOCATION_CODE
             )
         }
 
@@ -101,17 +100,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    //1
     private fun checkPermissions(): Boolean {
         var result = false
         if ((ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED)
-            ||
-            (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
+                this, Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED) || (ContextCompat.checkSelfPermission(
+                this, Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED)
         ) {
             result = true
@@ -119,7 +113,6 @@ class MainActivity : ComponentActivity() {
         return result
     }
 
-    //2
     private fun isLocationEnabled(): Boolean {
         val locationManager: LocationManager =
             getSystemService(Context.LOCATION_SERVICE) as LocationManager
@@ -128,18 +121,14 @@ class MainActivity : ComponentActivity() {
         )
     }
 
-    //3
     private fun getFreshLocation() {
 
-        mFusedLocationProviderClient =
-            LocationServices.getFusedLocationProviderClient(this)
+        mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
 
         if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
+                this, Manifest.permission.ACCESS_FINE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
+                this, Manifest.permission.ACCESS_COARSE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
             ActivityCompat.requestPermissions(
@@ -150,29 +139,22 @@ class MainActivity : ComponentActivity() {
             )
 
         }
-        mFusedLocationProviderClient.requestLocationUpdates(
-            LocationRequest.Builder(0).apply {
-                setPriority(Priority.PRIORITY_HIGH_ACCURACY)
-            }.build(),
-            object : LocationCallback() {
-                override fun onLocationResult(p0: LocationResult) {
-                    super.onLocationResult(p0)
-                    val location = p0.lastLocation ?: return
+        mFusedLocationProviderClient.requestLocationUpdates(LocationRequest.Builder(0).apply {
+            setPriority(Priority.PRIORITY_HIGH_ACCURACY)
+        }.build(), object : LocationCallback() {
+            override fun onLocationResult(p0: LocationResult) {
+                super.onLocationResult(p0)
+                val location = p0.lastLocation ?: return
 
-                    locationState.value = location
-                    val geocoder = Geocoder(this@MainActivity)
-                    val addresses = geocoder.getFromLocation(
-                        location.latitude,
-                        location.longitude,
-                        1
-                    )
-                    addressText.value =
-                        addresses?.get(0)?.getAddressLine(0) ?: "Address not found"
-                }
-            },
-            Looper.myLooper()
+                locationState.value = location
+                val geocoder = Geocoder(this@MainActivity)
+                val addresses = geocoder.getFromLocation(
+                    location.latitude, location.longitude, 1
+                )
+                addressText.value = addresses?.get(0)?.getAddressLine(0) ?: "Address not found"
+            }
+        }, Looper.myLooper()
         )
-
     }
 
     override fun onRequestPermissionsResult(
@@ -189,7 +171,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    //4
     private fun enableLocationServices() {
         val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
         startActivity(intent)
@@ -218,8 +199,11 @@ fun BottomBar(navHostController: NavHostController) {
 
     NavigationBar {
         listOfScreens.forEach { item ->
-            NavigationBarItem(
-                icon = { Icon(painterResource(item.icon), contentDescription = item.title) },
+            NavigationBarItem(icon = {
+                Icon(
+                    painterResource(item.icon), contentDescription = item.title
+                )
+            },
                 label = { Text(item.title) },
                 selected = currentDestination == item.route,
                 onClick = {
@@ -229,8 +213,7 @@ fun BottomBar(navHostController: NavHostController) {
                         }
                         launchSingleTop = true
                     }
-                }
-            )
+                })
         }
     }
 }
@@ -238,19 +221,27 @@ fun BottomBar(navHostController: NavHostController) {
 @Composable
 fun BottomNavGraph(navHostController: NavHostController, locationState: Location) {
     NavHost(
-        navController = navHostController,
-        startDestination = BottomBarRoutes.HomeScreenRoute.route
+        navController = navHostController, startDestination = BottomBarRoutes.HomeScreenRoute.route
     ) {
         composable(BottomBarRoutes.HomeScreenRoute.route) { backStackEntry ->
             val parentEntry = navHostController.currentBackStackEntry
             val context = LocalContext.current
+            val settingsDataStore = SettingsDataStore(context)
+
+            val settingsViewModel = ViewModelProvider(
+                parentEntry!!, SettingsFactory(settingsDataStore)
+            ).get(SettingsViewModel::class.java)
+
             val viewModel = ViewModelProvider(
-                parentEntry!!,
-                HomeFactory(
-                    WeatherRepositoryImp.getInstance(
-                        RemoteDataSourceImp(Retrofit.apiService),
-                        LocalDataSourceImp(WeatherDatabase.getInstance(context).getWeatherDao())
-                    )
+                parentEntry, HomeFactory(
+                    RepositoryImp.getInstance(
+                        RemoteDataSourceImp(Retrofit.apiService), LocalDataSourceImp(
+                            AppDatabase.getInstance(context).getFavoriteDao(),
+                            AppDatabase.getInstance(context).getWeatherDao(),
+                            AppDatabase.getInstance(context).getForecastDao(),
+                            AppDatabase.getInstance(context).getAlarmDao()
+                        )
+                    ), settingsViewModel
                 )
             ).get(HomeViewModel::class.java)
             HomeScreen(navHostController, viewModel, locationState)
@@ -259,31 +250,42 @@ fun BottomNavGraph(navHostController: NavHostController, locationState: Location
         composable(BottomBarRoutes.FavoritesScreenRoute.route) { backStackEntry ->
             val parentEntry = navHostController.currentBackStackEntry
             val context = LocalContext.current
+            val settingsDataStore = SettingsDataStore(context)
+            val settingsViewModel = ViewModelProvider(
+                parentEntry!!, SettingsFactory(settingsDataStore)
+            ).get(SettingsViewModel::class.java)
+
             val viewModel = ViewModelProvider(
-                parentEntry!!,
-                FavLocationsFactory(
-                    WeatherRepositoryImp.getInstance(
-                        RemoteDataSourceImp(Retrofit.apiService),
-                        LocalDataSourceImp(WeatherDatabase.getInstance(context).getWeatherDao())
-                    )
+                parentEntry, FavLocationsFactory(
+                    RepositoryImp.getInstance(
+                        RemoteDataSourceImp(Retrofit.apiService), LocalDataSourceImp(
+                            AppDatabase.getInstance(context).getFavoriteDao(),
+                            AppDatabase.getInstance(context).getWeatherDao(),
+                            AppDatabase.getInstance(context).getForecastDao(),
+                            AppDatabase.getInstance(context).getAlarmDao()
+                        )
+                    ), settingsViewModel
                 )
             ).get(FavLocationsViewModel::class.java)
-            FavoriteLocationsScreen(navHostController, viewModel)
+            FavoriteLocationsScreen(navHostController, viewModel, context)
         }
 
         composable(BottomBarRoutes.AlertsScreenRoute.route) { backStackEntry ->
             val parentEntry = navHostController.currentBackStackEntry
             val context = LocalContext.current
             val viewModel = ViewModelProvider(
-                parentEntry!!,
-                AlertsFactory(
-                    WeatherRepositoryImp.getInstance(
-                        RemoteDataSourceImp(Retrofit.apiService),
-                        LocalDataSourceImp(WeatherDatabase.getInstance(context).getWeatherDao())
+                parentEntry!!, AlertsFactory(
+                    RepositoryImp.getInstance(
+                        RemoteDataSourceImp(Retrofit.apiService), LocalDataSourceImp(
+                            AppDatabase.getInstance(context).getFavoriteDao(),
+                            AppDatabase.getInstance(context).getWeatherDao(),
+                            AppDatabase.getInstance(context).getForecastDao(),
+                            AppDatabase.getInstance(context).getAlarmDao()
+                        )
                     )
                 )
             ).get(AlertsViewModel::class.java)
-            AlertsScreen(navHostController, viewModel)
+            AlertsScreen(navHostController, viewModel, locationState)
         }
 
         composable(BottomBarRoutes.SettingsScreenRoute.route) { backStackEntry ->
@@ -291,10 +293,36 @@ fun BottomNavGraph(navHostController: NavHostController, locationState: Location
             val context = LocalContext.current
             val settingsDataStore = SettingsDataStore(context)
             val viewModel = ViewModelProvider(
-                parentEntry!!,
-                SettingsFactory(settingsDataStore)
+                parentEntry!!, SettingsFactory(settingsDataStore)
             ).get(SettingsViewModel::class.java)
             SettingsScreen(navHostController, viewModel)
+        }
+
+        composable("locationDetails/{lat}/{lon}") { backStackEntry ->
+            val lat = backStackEntry.arguments?.getString("lat")?.toDoubleOrNull() ?: 0.0
+            val lon = backStackEntry.arguments?.getString("lon")?.toDoubleOrNull() ?: 0.0
+            val parentEntry = navHostController.currentBackStackEntry
+            val context = LocalContext.current
+            val settingsDataStore = SettingsDataStore(context)
+            val settingsViewModel = ViewModelProvider(
+                parentEntry!!, SettingsFactory(settingsDataStore)
+            ).get(SettingsViewModel::class.java)
+
+            val viewModel = ViewModelProvider(
+                parentEntry, FavLocationsFactory(
+                    RepositoryImp.getInstance(
+                        RemoteDataSourceImp(Retrofit.apiService), LocalDataSourceImp(
+                            AppDatabase.getInstance(context).getFavoriteDao(),
+                            AppDatabase.getInstance(context).getWeatherDao(),
+                            AppDatabase.getInstance(context).getForecastDao(),
+                            AppDatabase.getInstance(context).getAlarmDao()
+                        )
+                    ), settingsViewModel
+                )
+            ).get(FavLocationsViewModel::class.java)
+            FavoriteLocationDetailsScreen(
+                viewModel = viewModel, lat = lat, lon = lon
+            )
         }
     }
 }

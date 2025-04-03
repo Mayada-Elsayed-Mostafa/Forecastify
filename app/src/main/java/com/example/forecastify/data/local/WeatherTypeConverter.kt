@@ -1,12 +1,19 @@
 package com.example.forecastify.data.local
 
 import androidx.room.TypeConverter
-import com.example.forecastify.data.models.*
+import com.example.forecastify.data.models.CityOfForecast
+import com.example.forecastify.data.models.Clouds
+import com.example.forecastify.data.models.Coord
+import com.example.forecastify.data.models.Main
+import com.example.forecastify.data.models.Rain
+import com.example.forecastify.data.models.Sys
+import com.example.forecastify.data.models.Weather
+import com.example.forecastify.data.models.WeatherItem
+import com.example.forecastify.data.models.Wind
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
 class WeatherTypeConverter {
-
     private val gson = Gson()
 
     @TypeConverter
@@ -84,5 +91,27 @@ class WeatherTypeConverter {
     fun toSys(data: String): Sys {
         val type = object : TypeToken<Sys>() {}.type
         return gson.fromJson(data, type)
+    }
+
+
+    @TypeConverter
+    fun fromWeatherItemList(weatherItemList: List<WeatherItem>?): String? {
+        return Gson().toJson(weatherItemList)
+    }
+
+    @TypeConverter
+    fun toWeatherItemList(weatherItemListString: String?): List<WeatherItem>? {
+        val listType = object : TypeToken<List<WeatherItem>>() {}.type
+        return Gson().fromJson(weatherItemListString, listType)
+    }
+
+    @TypeConverter
+    fun fromCityOfForecast(city: CityOfForecast?): String? {
+        return Gson().toJson(city)
+    }
+
+    @TypeConverter
+    fun toCityOfForecast(cityString: String?): CityOfForecast? {
+        return Gson().fromJson(cityString, CityOfForecast::class.java)
     }
 }

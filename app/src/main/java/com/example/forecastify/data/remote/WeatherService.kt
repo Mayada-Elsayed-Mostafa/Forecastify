@@ -16,7 +16,7 @@ interface WeatherService {
     ): Response<WeatherResponse>
 
     @GET("data/2.5/forecast")
-    suspend fun getForecastOfDay(
+    suspend fun getForecast(
         @Query("lat") lat: Double,
         @Query("lon") lon: Double,
         @Query("appid") apiKey: String,

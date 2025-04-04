@@ -22,7 +22,7 @@ interface Repository {
 
     suspend fun deleteLocation(id: Int)
 
-    suspend fun getAllAlarms(): Flow<List<AlarmItem>>
+    fun getAllAlarms(): Flow<List<AlarmItem>>
 
     suspend fun addAlarm(alarmItem: AlarmItem)
 

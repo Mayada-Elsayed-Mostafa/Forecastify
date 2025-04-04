@@ -51,7 +51,6 @@ class RepositoryImp private constructor(
         }
     }
 
-
     override fun getFavoriteLocations(): Flow<List<FavoriteLocation>> {
         return localDataSource.getAllLocations()
     }
@@ -64,7 +63,7 @@ class RepositoryImp private constructor(
         localDataSource.deleteLocation(id)
     }
 
-    override suspend fun getAllAlarms(): Flow<List<AlarmItem>> {
+    override fun getAllAlarms(): Flow<List<AlarmItem>> {
         return localDataSource.getAllAlarms()
     }
 

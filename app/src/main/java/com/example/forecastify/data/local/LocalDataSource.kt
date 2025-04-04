@@ -8,11 +8,11 @@ import kotlinx.coroutines.flow.Flow
 
 interface LocalDataSource {
 
-    suspend fun getWeatherFromRoom(): Flow<WeatherResponse>
+    fun getWeatherFromRoom(): Flow<WeatherResponse>
 
     suspend fun insertWeather(weatherResponse: WeatherResponse)
 
-    suspend fun getForecastFromRoom(): Flow<ForecastResponse>
+    fun getForecastFromRoom(): Flow<ForecastResponse>
 
     suspend fun insertForecast(forecastResponse: ForecastResponse)
 
@@ -22,7 +22,7 @@ interface LocalDataSource {
 
     suspend fun deleteLocation(id: Int)
 
-    suspend fun getAllAlarms(): Flow<List<AlarmItem>>
+    fun getAllAlarms(): Flow<List<AlarmItem>>
 
     suspend fun insertAlarm(alertItem: AlarmItem)
 

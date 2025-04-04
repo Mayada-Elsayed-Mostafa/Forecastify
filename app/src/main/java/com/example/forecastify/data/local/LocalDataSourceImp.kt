@@ -14,11 +14,11 @@ class LocalDataSourceImp(
     private val alarmDao: AlarmDao,
 ) : LocalDataSource {
 
-    override suspend fun getWeatherFromRoom(): Flow<WeatherResponse> {
+    override fun getWeatherFromRoom(): Flow<WeatherResponse> {
         return weatherDao.getWeather()
     }
 
-    override suspend fun getForecastFromRoom(): Flow<ForecastResponse> {
+    override fun getForecastFromRoom(): Flow<ForecastResponse> {
         return forecastDao.getForecast()
     }
 
@@ -42,7 +42,7 @@ class LocalDataSourceImp(
         return favoriteDao.deleteLocation(id)
     }
 
-    override suspend fun getAllAlarms(): Flow<List<AlarmItem>> {
+    override fun getAllAlarms(): Flow<List<AlarmItem>> {
         return alarmDao.getAllAlarms()
     }
 

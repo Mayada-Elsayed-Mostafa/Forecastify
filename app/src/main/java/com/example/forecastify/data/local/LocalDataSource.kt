@@ -20,11 +20,13 @@ interface LocalDataSource {
 
     suspend fun insertLocation(location: FavoriteLocation)
 
-    suspend fun deleteLocation(id: Int)
+    suspend fun deleteLocation(location: FavoriteLocation)
 
     fun getAllAlarms(): Flow<List<AlarmItem>>
 
     suspend fun insertAlarm(alertItem: AlarmItem)
 
     suspend fun deleteAlarm(alarmItem: AlarmItem)
+
+    suspend fun deleteAlarmTime(time: String)
 }

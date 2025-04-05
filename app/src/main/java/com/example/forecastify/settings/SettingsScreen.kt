@@ -24,11 +24,15 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.example.forecastify.R
 import com.example.forecastify.data.local.SettingsDataStore
+import com.example.forecastify.utils.LanguageConverter
 
 @Composable
 fun SettingsScreen(navHostController: NavHostController, viewModel: SettingsViewModel) {
@@ -37,11 +41,26 @@ fun SettingsScreen(navHostController: NavHostController, viewModel: SettingsView
     val windSpeedUnit by viewModel.windSpeedUnit.collectAsState()
     val locationMethod by viewModel.locationMethod.collectAsState()
 
+    viewModel.loadSettings()
+
+    val context = LocalContext.current
+
     val settingsOptions = listOf(
-        "Language" to listOf("English", "Arabic", "Default"),
-        "Temperature Unit" to listOf("Kelvin", "Celsius", "Fahrenheit"),
-        "Wind Speed Unit" to listOf("Meter/Sec", "Mile/Hour"),
-        "Location Method" to listOf("GPS", "Map")
+        "Language" to listOf(
+            stringResource(R.string.english),
+            stringResource(R.string.arabic),
+            stringResource(R.string.defaultt)
+        ),
+        "Temperature Unit" to listOf(
+            stringResource(R.string.kelvin_k),
+            stringResource(R.string.celsius_c),
+            stringResource(R.string.fahrenheit_f)
+        ),
+        "Wind Speed Unit" to listOf(
+            stringResource(R.string.meter_sec),
+            stringResource(R.string.mile_hour)
+        ),
+        "Location Method" to listOf(stringResource(R.string.gps), stringResource(R.string.map))
     )
 
     val selectedOptions = remember { mutableStateMapOf<String, String>() }
@@ -60,7 +79,16 @@ fun SettingsScreen(navHostController: NavHostController, viewModel: SettingsView
         items(settingsOptions) { (title, options) ->
             SettingSection(title, options, selectedOptions) { key, value ->
                 when (key) {
-                    "Language" -> viewModel.saveSetting(SettingsDataStore.LANGUAGE_KEY, value)
+                    "Language" -> {
+                        viewModel.saveSetting(SettingsDataStore.LANGUAGE_KEY, value)
+                        if (value == "Arabic" || value == "العربية") {
+                            LanguageConverter.changeLanguage(context, "ar")
+                        }
+                        if (value == "English" || value == "الإنجليزية") {
+                            LanguageConverter.changeLanguage(context, "en")
+                        }
+                    }
+
                     "Temperature Unit" -> viewModel.saveSetting(
                         SettingsDataStore.TEMPERATURE_UNIT_KEY,
                         value
@@ -133,4 +161,3 @@ fun SettingSection(
         }
     }
 }
-

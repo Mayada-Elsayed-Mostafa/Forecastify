@@ -38,8 +38,8 @@ class LocalDataSourceImp(
         return favoriteDao.insertLocation(location)
     }
 
-    override suspend fun deleteLocation(id: Int) {
-        return favoriteDao.deleteLocation(id)
+    override suspend fun deleteLocation(location: FavoriteLocation) {
+        favoriteDao.deleteLocation(location)
     }
 
     override fun getAllAlarms(): Flow<List<AlarmItem>> {
@@ -54,7 +54,7 @@ class LocalDataSourceImp(
         alarmDao.deleteAlarm(alarmItem)
     }
 
-    suspend fun deleteAlarmTime(time: String){
+    override suspend fun deleteAlarmTime(time: String) {
         alarmDao.deleteAlarmTime(time)
     }
 

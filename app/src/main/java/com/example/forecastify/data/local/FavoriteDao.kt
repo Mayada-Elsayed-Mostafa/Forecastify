@@ -1,6 +1,7 @@
 package com.example.forecastify.data.local
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -16,6 +17,6 @@ interface FavoriteDao {
     @Query("SELECT * FROM favorite_location_table")
     fun getAllLocations(): Flow<List<FavoriteLocation>>
 
-    @Query("DELETE FROM favorite_location_table WHERE id = :id")
-    suspend fun deleteLocation(id: Int)
+    @Delete
+    suspend fun deleteLocation(location: FavoriteLocation): Int
 }

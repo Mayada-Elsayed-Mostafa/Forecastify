@@ -20,7 +20,7 @@ interface Repository {
 
     suspend fun addLocation(favoriteLocation: FavoriteLocation)
 
-    suspend fun deleteLocation(id: Int)
+    suspend fun deleteLocation(location: FavoriteLocation)
 
     fun getAllAlarms(): Flow<List<AlarmItem>>
 

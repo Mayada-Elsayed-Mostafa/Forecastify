@@ -2,6 +2,7 @@ package com.example.forecastify.favoriteLocations
 
 import android.annotation.SuppressLint
 import android.content.Context
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -37,6 +39,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import coil.compose.rememberAsyncImagePainter
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
+import com.airbnb.lottie.compose.rememberLottieComposition
 import com.example.forecastify.R
 import com.example.forecastify.data.models.FavoriteLocation
 import com.google.android.gms.maps.model.CameraPosition
@@ -54,71 +61,79 @@ fun FavoriteLocationsScreen(
     viewModel: FavLocationsViewModel,
     context: Context,
 ) {
+
+    LaunchedEffect(Unit) {
+        viewModel.getFavoriteLocations()
+    }
+
     var showBottomSheet by remember { mutableStateOf(false) }
     var selectedPosition by remember { mutableStateOf<LatLng?>(null) }
 
-    val favoriteLocations by viewModel.favoriteLocations.collectAsState()
+    val favoriteLocations by viewModel.favoriteLocations.collectAsState(initial = emptyList())
 
-    Scaffold(
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { showBottomSheet = true },
-                shape = CircleShape,
-                modifier = Modifier.padding(bottom = 80.dp)
-            ) {
-                Icon(Icons.Filled.LocationOn, "Add Favorite Location")
-            }
+    Scaffold(floatingActionButton = {
+        FloatingActionButton(
+            onClick = { showBottomSheet = true },
+            shape = CircleShape,
+            modifier = Modifier.padding(bottom = 80.dp)
+        ) {
+            Icon(Icons.Filled.LocationOn, "Add Favorite Location")
         }
-    ) { innerPadding ->
+    }) { innerPadding ->
         Column(
             modifier = Modifier.padding(innerPadding),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            LazyColumn(
-                modifier = Modifier.padding(bottom = 105.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(favoriteLocations.size) { index ->
-                    val location = favoriteLocations[index]
-                    FavLocationItem(location) {
-                        navHostController.navigate("locationDetails/${location.lat}/${location.lon}")
-                    }
-                }
-            }
-        }
-    }
-
-    if (showBottomSheet) {
-        ModalBottomSheet(onDismissRequest = { showBottomSheet = false }) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    stringResource(R.string.select_favorite_location),
-                    style = MaterialTheme.typography.headlineSmall
-                )
-
-                Button(
-                    onClick = {
-                        selectedPosition?.let { position ->
-                            viewModel.getAddress(context, position) { address ->
-                                val newLocation = FavoriteLocation(
-                                    address = address,
-                                    lat = position.latitude,
-                                    lon = position.longitude
-                                )
-
-                                viewModel.addLocation(newLocation)
-                                showBottomSheet = false
+            Box(modifier = Modifier.fillMaxSize()) {
+                if (favoriteLocations.isEmpty()) {
+                    NoLocationsScreen()
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.padding(bottom = 105.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(favoriteLocations.size) { index ->
+                            val location = favoriteLocations[index]
+                            FavLocationItem(location,
+                                onDelete = { viewModel.deleteLocation(location) }) {
+                                navHostController.navigate("locationDetails/${location.lat}/${location.lon}")
                             }
                         }
-                    },
-                    enabled = selectedPosition != null,
-                    modifier = Modifier.padding(bottom = 24.dp)
-                ) {
-                    Text(stringResource(R.string.save_location))
+                    }
                 }
+                if (showBottomSheet) {
+                    ModalBottomSheet(onDismissRequest = { showBottomSheet = false }) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                stringResource(R.string.select_favorite_location),
+                                style = MaterialTheme.typography.headlineSmall
+                            )
 
-                MapScreen { newPosition ->
-                    selectedPosition = newPosition
+                            Button(
+                                onClick = {
+                                    selectedPosition?.let { position ->
+                                        viewModel.getAddress(context, position) { address ->
+                                            val newLocation = FavoriteLocation(
+                                                address = address,
+                                                lat = position.latitude,
+                                                lon = position.longitude
+                                            )
+                                            viewModel.addLocation(newLocation)
+                                            showBottomSheet = false
+                                        }
+                                    }
+                                },
+                                enabled = selectedPosition != null,
+                                modifier = Modifier.padding(bottom = 24.dp)
+                            ) {
+                                Text(stringResource(R.string.save_location))
+                            }
+
+                            MapScreen { newPosition ->
+                                selectedPosition = newPosition
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -127,7 +142,12 @@ fun FavoriteLocationsScreen(
 
 
 @Composable
-fun FavLocationItem(location: FavoriteLocation, onClick: () -> Unit) {
+fun FavLocationItem(
+    location: FavoriteLocation,
+    onDelete: (FavoriteLocation) -> Unit,
+    onClick: () -> Unit,
+
+    ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -146,6 +166,14 @@ fun FavLocationItem(location: FavoriteLocation, onClick: () -> Unit) {
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.weight(1f)
             )
+
+            IconButton(onClick = { onDelete(location) }) {
+                Image(
+                    painter = rememberAsyncImagePainter(R.drawable.delete_icon),
+                    contentDescription = "Delete Location",
+                    modifier = Modifier.size(24.dp)
+                )
+            }
 
             IconButton(onClick = onClick) {
                 Icon(
@@ -167,19 +195,32 @@ fun MapScreen(onLocationSelected: (LatLng) -> Unit) {
     var selectedPosition by remember { mutableStateOf(LatLng(30.0444, 31.2357)) }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        GoogleMap(
-            modifier = Modifier.matchParentSize(),
+        GoogleMap(modifier = Modifier.matchParentSize(),
             cameraPositionState = cameraPositionState,
             onMapClick = { clickedPosition ->
                 selectedPosition = clickedPosition
                 onLocationSelected(clickedPosition)
-            }
-        ) {
+            }) {
             Marker(
                 state = MarkerState(position = selectedPosition),
                 title = stringResource(R.string.selected_location),
                 snippet = "Lat: ${selectedPosition.latitude}, Lng: ${selectedPosition.longitude}"
             )
         }
+    }
+}
+
+@Composable
+fun NoLocationsScreen() {
+
+    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.animation_fav_location))
+    val progress by animateLottieCompositionAsState(composition)
+
+    Box(
+        modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
+    ) {
+        LottieAnimation(
+            composition = composition, progress = progress, modifier = Modifier.size(250.dp)
+        )
     }
 }

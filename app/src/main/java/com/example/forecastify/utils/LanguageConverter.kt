@@ -10,7 +10,7 @@ import java.text.NumberFormat
 import java.util.Locale
 
 object LanguageConverter {
-    fun changeLanguage(  context: Context,languageCode: String) {
+    fun changeLanguage(context: Context, languageCode: String) {
         //version >= 13
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             context.getSystemService(LocaleManager::class.java).applicationLocales =
@@ -18,8 +18,8 @@ object LanguageConverter {
         } else {
             //version < 13
             AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(languageCode))
-            }
         }
+    }
 
     fun formatNumber(value: Int): String {
         val formatter = NumberFormat.getInstance(Locale.getDefault())
